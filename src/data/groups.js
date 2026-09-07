@@ -30,29 +30,72 @@ export const GROUPS = [
 // 'neighbouring'          -> all pathways in both groups are neighbouring
 // 'compatible'            -> all pathways in both groups are compatible
 // 'partial'               -> only the listed pathways of `b` are compatible with `a`
-export const GROUP_EDGES = [
-  // Fourth Pillar: separate groups, but neighbouring
-  { a: 'ED', b: 'CoD', kind: 'neighbouring', note: 'Fourth Pillar' },
+const STANDARD_IDS = ['GA','LoM','ED','CoD','KoL','DoK','FoD','TA','GoO']
 
-  // Split pairs: one Great Old One divided into two groups
+// All standard groups are Fully Non-Adjacent with each other, except ED/CoD.
+function standardNonAdjacency() {
+  const out = []
+  for (let i = 0; i < STANDARD_IDS.length; i++) {
+    for (let j = i + 1; j < STANDARD_IDS.length; j++) {
+      const [a, b] = [STANDARD_IDS[i], STANDARD_IDS[j]]
+      if ((a === 'ED' && b === 'CoD') || (a === 'CoD' && b === 'ED')) continue
+      out.push({ a, b, kind: 'nonAdjacent' })
+    }
+  }
+  return out
+}
+
+export const GROUP_EDGES = [
+  ...standardNonAdjacency(),
+
+  // Green: neighbouring
+  { a: 'ED',   b: 'CoD',  kind: 'neighbouring', note: 'Fourth Pillar' },
   { a: 'MGoD', b: 'GoO',  kind: 'neighbouring', note: 'split from one Great Old One' },
   { a: 'MToD', b: 'FoD',  kind: 'neighbouring', note: 'split from one Great Old One' },
   { a: 'UM',   b: 'TA',   kind: 'neighbouring', note: 'split from one Great Old One' },
 
-  // Partial compatibility (from the compatibility chart)
-  { a: 'GA',  b: 'UM',  kind: 'partial', pathways: ['sun'] },
-  { a: 'GA',  b: 'IR',  kind: 'partial', pathways: ['visionary', 'hanged-man', 'white-tower'] },
-  { a: 'GA',  b: 'GoF', kind: 'partial', pathways: ['visionary', 'white-tower'] },
-  { a: 'GA',  b: 'HDO', kind: 'partial', pathways: ['visionary'] },
-  { a: 'GA',  b: 'SD',  kind: 'partial', pathways: ['sun', 'tyrant'] },
-  { a: 'LoM', b: 'GoF', kind: 'partial', pathways: ['fool', 'error'] },
-  { a: 'LoM', b: 'CoI', kind: 'partial', pathways: ['fool', 'error'] },
-  { a: 'LoM', b: 'HDO', kind: 'partial', pathways: ['error', 'door'] },
-  { a: 'ED',  b: 'GoF', kind: 'partial', pathways: ['darkness'] },
-  { a: 'ED',  b: 'HDO', kind: 'partial', pathways: ['twilight-giant'] },
+  // Orange: confirmed non-adjacent across the standard/non-standard line
+  { a: 'MToD', b: 'ED',   kind: 'nonAdjacent' },
+  { a: 'MToD', b: 'CoD',  kind: 'nonAdjacent' },
 
-    // Stated in prose (Demoness S2 -> Condenser S1 -> Sun S0), absent from the chart
-  { a: 'SD', b: 'CoD', kind: 'partial', pathways: ['demoness'], note: 'stated advancement chain' },
+  // Light blue: partially compatible (only the listed pillar-group pathways)
+  { a: 'UM',   b: 'GA',   kind: 'partial', pathways: ['sun'] },
+  { a: 'IR',   b: 'GA',   kind: 'partial', pathways: ['visionary', 'hanged-man', 'white-tower'] },
+  { a: 'GoF',  b: 'GA',   kind: 'partial', pathways: ['visionary', 'white-tower'] },
+  { a: 'HDO',  b: 'GA',   kind: 'partial', pathways: ['visionary'] },
+  { a: 'SD',   b: 'GA',   kind: 'partial', pathways: ['sun', 'tyrant'] },
+  { a: 'GoF',  b: 'LoM',  kind: 'partial', pathways: ['fool', 'error'] },
+  { a: 'CoI',  b: 'LoM',  kind: 'partial', pathways: ['fool', 'error'] },
+  { a: 'HDO',  b: 'LoM',  kind: 'partial', pathways: ['error', 'door'] },
+  { a: 'GoF',  b: 'ED',   kind: 'partial', pathways: ['darkness'] },
+  { a: 'HDO',  b: 'ED',   kind: 'partial', pathways: ['twilight-giant'] },
+
+  // Blue: fully compatible, non-standard to standard
+  { a: 'IR',   b: 'DoK',  kind: 'compatible' },
+  { a: 'IR',   b: 'FoD',  kind: 'compatible' },
+  { a: 'GoF',  b: 'KoL',  kind: 'compatible' },
+  { a: 'CoI',  b: 'ED',   kind: 'compatible' },
+  { a: 'CoI',  b: 'CoD',  kind: 'compatible' },
+  { a: 'CoI',  b: 'KoL',  kind: 'compatible' },
+  { a: 'MoD',  b: 'ED',   kind: 'compatible' },
+  { a: 'MoD',  b: 'CoD',  kind: 'compatible' },
+  { a: 'HDO',  b: 'DoK',  kind: 'compatible' },
+  { a: 'HDO',  b: 'TA',   kind: 'compatible' },
+  { a: 'SD',   b: 'CoD',  kind: 'compatible' },
+  { a: 'SD',   b: 'DoK',  kind: 'compatible' },
+  { a: 'SD',   b: 'TA',   kind: 'compatible' },
+
+  // Blue: fully compatible, non-standard to non-standard
+  { a: 'MToD', b: 'IR',   kind: 'compatible' },
+  { a: 'GoF',  b: 'CoI',  kind: 'compatible' },
+  { a: 'CoI',  b: 'MoD',  kind: 'compatible' },
+  { a: 'MoD',  b: 'HDO',  kind: 'compatible' },
+  { a: 'HDO',  b: 'SD',   kind: 'compatible' },
+
+  // Primordial Hunger: symbol of Convergence, compatible with everything
+  ...['GA','LoM','ED','CoD','KoL','DoK','FoD','TA','GoO',
+      'MGoD','UM','MToD','IR','GoF','CoI','MoD','HDO','SD']
+    .map(b => ({ a: 'PH', b, kind: 'compatible', note: 'Convergence' })),
 ]
 
 // Pathway-level overlaps that are NOT switchable, but do cause convergence.

@@ -36,7 +36,7 @@ function buildProximityMap() {
     const aPaths = PATHWAYS.filter(p => p.group === e.a).map(p => p.id)
     const bPaths = PATHWAYS.filter(p => p.group === e.b).map(p => p.id)
 
-    if (e.kind === 'neighbouring' || e.kind === 'compatible') {
+        if (e.kind === 'neighbouring' || e.kind === 'compatible' || e.kind === 'nonAdjacent') {
       for (const a of aPaths)
         for (const b of bPaths)
           set(a, b, e.kind, e.note)
