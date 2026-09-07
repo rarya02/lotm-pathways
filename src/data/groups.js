@@ -50,6 +50,9 @@ export const GROUP_EDGES = [
   { a: 'LoM', b: 'HDO', kind: 'partial', pathways: ['error', 'door'] },
   { a: 'ED',  b: 'GoF', kind: 'partial', pathways: ['darkness'] },
   { a: 'ED',  b: 'HDO', kind: 'partial', pathways: ['twilight-giant'] },
+
+    // Stated in prose (Demoness S2 -> Condenser S1 -> Sun S0), absent from the chart
+  { a: 'SD', b: 'CoD', kind: 'partial', pathways: ['demoness'], note: 'stated advancement chain' },
 ]
 
 // Pathway-level overlaps that are NOT switchable, but do cause convergence.
