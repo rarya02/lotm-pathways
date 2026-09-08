@@ -5,9 +5,9 @@ import { ADVANCEMENT } from '../src/data/advancement.js'
 import { PATHWAYS } from '../src/data/pathways.js'
 import { GROUPS } from '../src/data/groups.js'
 
-const SEQ_KEYS = ['name', 'main', 'supp', 'ritual', 'note']
+const SEQ_KEYS = ['name', 'main', 'supp', 'ritual']
 const isNum = k => /^\d+$/.test(k)
-const problems = [], seqNotes = [], pathNotes = []
+const problems = []
 
 for (const [id, entry] of Object.entries(ADVANCEMENT)) {
   const p = PATHWAYS.find(x => x.id === id)
@@ -16,8 +16,7 @@ for (const [id, entry] of Object.entries(ADVANCEMENT)) {
   const seqs = Object.keys(entry).filter(isNum).map(Number).sort((a, b) => b - a)
   if (seqs.join() !== '9,8,7,6,5,4,3,2,1,0') problems.push(`${id}: sequence keys are ${seqs.join()}`)
   for (const k of Object.keys(entry).filter(k => !isNum(k))) {
-    if (k === 'note') pathNotes.push(id)
-    else problems.push(`${id}: unknown pathway-level key '${k}'`)
+    problems.push(`${id}: unknown pathway-level key '${k}'`)
   }
 
   for (const n of seqs) {
@@ -29,7 +28,6 @@ for (const [id, entry] of Object.entries(ADVANCEMENT)) {
     if (!('ritual' in e)) problems.push(`${at}: ritual key absent (use null)`)
     if (n > 5 && e.ritual) problems.push(`${at}: ritual recorded below Sequence 5`)
     for (const k of Object.keys(e)) if (!SEQ_KEYS.includes(k)) problems.push(`${at}: unknown key '${k}'`)
-    if (e.note) seqNotes.push(at)
   }
 }
 
@@ -54,7 +52,5 @@ console.log(`non-standard:          ${nonStandardWithData.length}/${PATHWAYS.len
 console.log(`sequences recorded:    ${ids.length * 10}`)
 console.log(`groups complete: ${complete.join(', ') || 'none'}`)
 console.log(`groups partial:  ${partial.join(', ') || 'none'}`)
-console.log(`pathway notes:   ${pathNotes.join(', ') || 'none'}`)
-console.log(`sequence notes:  ${seqNotes.join(', ') || 'none'}`)
 console.log(problems.length ? `\nPROBLEMS:\n  ${problems.join('\n  ')}` : '\nno problems - every entry validates')
 process.exit(problems.length ? 1 : 0)

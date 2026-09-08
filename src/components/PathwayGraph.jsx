@@ -1,11 +1,19 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
-import * as d3 from 'd3'
+// Named imports so Rollup can drop the ~80% of d3 this app never touches;
+// `import * as d3` defeats tree-shaking entirely.
+import { select } from 'd3-selection'
+import { zoom as d3Zoom, zoomIdentity } from 'd3-zoom'
+import { drag as d3Drag } from 'd3-drag'
+import {
+  forceSimulation, forceLink, forceManyBody, forceX, forceY, forceCollide,
+} from 'd3-force'
+import 'd3-transition' // side effect: adds selection.transition()
 import { PATHWAYS, getPathway } from '../data/pathways.js'
 import { GROUPS } from '../data/groups.js'
 import { PROXIMITY, proximityEdges, switchTargets } from '../data/proximity.js'
 import { describePathway } from '../data/descriptions.js'
 import { symbolFor } from '../data/symbols.js'
-import { getAdvancement, getAdvancementNote } from '../data/advancement.js'
+import { getAdvancement } from '../data/advancement.js'
 
 const GROUP_COLORS = {
   LoM: '#8b5cf6', GA: '#f59e0b', ED: '#475569', CoD: '#dc2626',
@@ -25,6 +33,12 @@ const EDGE_STYLE = {
 // pathway. On the rim it throws 31 lines across the whole canvas, so it sits in
 // the middle and its edges read as spokes instead.
 const CENTRE_GROUP = 'PH'
+
+// The ten outer-deity pathways are sequel material. Hidden by default so a
+// reader of the first book is not spoiled before finding the toggle.
+const STANDARD_GROUPS = new Set(GROUPS.filter(g => g.standard).map(g => g.id))
+const isStandard = (pathway) => STANDARD_GROUPS.has(pathway.group)
+const SPOILER_KEY = 'lotm:show-outer-deity-pathways'
 
 // Groups whose label reads better in a fixed spot than wherever the automatic
 // radial placement lands. The label is centred on the ring and nudged by `dx`,
@@ -49,12 +63,17 @@ export default function PathwayGraph() {
   const highlightRef = useRef(null)
   const selectedRef = useRef(null)
   const linksRef = useRef(null)
-  const showLinksRef = useRef(true)
+  const showLinksRef = useRef(false)
   const [selected, setSelected] = useState(null)
-  const [showHidden, setShowHidden] = useState(true)
-  const [showLinks, setShowLinks] = useState(true)
+  const [showHidden, setShowHidden] = useState(false)
+  const [showLinks, setShowLinks] = useState(false)
+  const [showSpoilers, setShowSpoilers] = useState(() => {
+    try { return localStorage.getItem(SPOILER_KEY) === '1' } catch { return false }
+  })
   const [openSeq, setOpenSeq] = useState(null)
   const [size, setSize] = useState({ width: 0, height: 0 })
+  const visible = showSpoilers ? PATHWAYS : PATHWAYS.filter(isStandard)
+  const isVisible = (id) => showSpoilers || visible.some(p => p.id === id)
   const sizeRef = useRef(false)
 
   selectedRef.current = selected
@@ -93,8 +112,12 @@ export default function PathwayGraph() {
     // Standard groups hold 22 of the 32 pathways, so they get the outer ring
     // where there is circumference to spread into. The non-standard groups are
     // one pathway each and sit comfortably on a tighter inner ring.
-    const outer = GROUPS.filter(g => g.standard)
-    const inner = GROUPS.filter(g => !g.standard && g.id !== CENTRE_GROUP)
+    const shown = showSpoilers ? PATHWAYS : PATHWAYS.filter(isStandard)
+    const shownIds = new Set(shown.map(p => p.id))
+    const liveGroups = new Set(shown.map(p => p.group))
+    const outer = GROUPS.filter(g => g.standard && liveGroups.has(g.id))
+    const inner = GROUPS.filter(g => !g.standard && g.id !== CENTRE_GROUP && liveGroups.has(g.id))
+    const hasCentre = liveGroups.has(CENTRE_GROUP)
 
     // Margins leave room for the group labels that sit outside the rings, but
     // scale down on small canvases where a fixed margin would eat the layout.
@@ -105,7 +128,7 @@ export default function PathwayGraph() {
     const innerRx = outerRx * 0.44
     const innerRy = outerRy * 0.50
 
-    const anchors = { [CENTRE_GROUP]: { x: cx, y: cy } }
+    const anchors = hasCentre ? { [CENTRE_GROUP]: { x: cx, y: cy } } : {}
     outer.forEach((g, i) => {
       const a = (i / outer.length) * 2 * Math.PI - Math.PI / 2
       anchors[g.id] = { x: cx + Math.cos(a) * outerRx, y: cy + Math.sin(a) * outerRy }
@@ -119,9 +142,9 @@ export default function PathwayGraph() {
     // Start each node at its anchor with a deterministic spiral offset, so the
     // simulation converges to the same layout every time.
     const groupSize = {}
-    PATHWAYS.forEach(p => { groupSize[p.group] = (groupSize[p.group] ?? 0) + 1 })
+    shown.forEach(p => { groupSize[p.group] = (groupSize[p.group] ?? 0) + 1 })
 
-    const nodes = PATHWAYS.map((p, i) => {
+    const nodes = shown.map((p, i) => {
       const a = anchors[p.group]
       const t = i * 2.39996
       return {
@@ -136,11 +159,12 @@ export default function PathwayGraph() {
     })
 
     const links = proximityEdges()
+      .filter(e => shownIds.has(e.source) && shownIds.has(e.target))
       .filter(e => EDGE_STYLE[e.kind])
       .filter(e => showHidden || e.kind !== 'hidden')
       .map(e => ({ ...e }))
 
-    const svg = d3.select(svgRef.current)
+    const svg = select(svgRef.current)
     svg.selectAll('*').remove()
     svg.attr('viewBox', [0, 0, width, height])
 
@@ -149,7 +173,7 @@ export default function PathwayGraph() {
     const container = svg.append('g')
 
     let panned = false
-    const zoom = d3.zoom()
+    const zoom = d3Zoom()
       .scaleExtent([0.75, 3])
       .translateExtent([[-200, -200], [width + 200, height + 200]])
       .on('start', () => { panned = false })
@@ -242,15 +266,15 @@ export default function PathwayGraph() {
       .attr('font-size', 10).attr('fill', '#dbe4fb')
       .attr('paint-order', 'stroke').attr('stroke', '#04060e').attr('stroke-width', 3.5)
 
-    const sim = d3.forceSimulation(nodes)
-      .force('link', d3.forceLink(links).id(d => d.id)
+    const sim = forceSimulation(nodes)
+      .force('link', forceLink(links).id(d => d.id)
         .distance(d => EDGE_STYLE[d.kind].distance).strength(0.02))
-      .force('charge', d3.forceManyBody().strength(-100))
+      .force('charge', forceManyBody().strength(-100))
       // Single-pathway groups hold their ring position harder, so the inner
       // ring stays a ring instead of scattering into the outer clusters.
-      .force('x', d3.forceX(d => d.ax).strength(d => d.solo ? 0.85 : 0.6))
-      .force('y', d3.forceY(d => d.ay).strength(d => d.solo ? 0.85 : 0.6))
-      .force('collide', d3.forceCollide(d => d.cr).strength(0.9))
+      .force('x', forceX(d => d.ax).strength(d => d.solo ? 0.85 : 0.6))
+      .force('y', forceY(d => d.ay).strength(d => d.solo ? 0.85 : 0.6))
+      .force('collide', forceCollide(d => d.cr).strength(0.9))
 
     // Nodes can never leave the frame, whatever the forces do.
     const padX = 62
@@ -397,7 +421,7 @@ export default function PathwayGraph() {
 
     node
       .on('mouseenter', function (event, d) {
-        d3.select(this).select('.halo').attr('opacity', 0.34)
+        select(this).select('.halo').attr('opacity', 0.34)
         const tip = tipRef.current
         if (!tip) return
         tip.innerHTML = ''
@@ -427,17 +451,17 @@ export default function PathwayGraph() {
       })
       .on('mousemove', placeTip)
       .on('mouseleave', function () {
-        d3.select(this).select('.halo').attr('opacity', 0.16)
+        select(this).select('.halo').attr('opacity', 0.16)
         if (tipRef.current) tipRef.current.hidden = true
       })
 
-    node.call(d3.drag()
+    node.call(d3Drag()
       .on('start', (e, d) => { if (!e.active) sim.alphaTarget(0.2).restart(); d.fx = d.x; d.fy = d.y })
       .on('drag', (e, d) => { d.fx = e.x; d.fy = e.y })
       .on('end', (e, d) => { if (!e.active) sim.alphaTarget(0); d.fx = null; d.fy = null }))
 
     return () => { alive = false; sim.stop(); highlightRef.current = null; linksRef.current = null }
-  }, [showHidden, size.width, size.height])
+  }, [showHidden, showSpoilers, size.width, size.height])
 
   // Hiding connections is presentation only: the simulation keeps its links, so
   // the layout does not shift when the lines come back.
@@ -452,7 +476,16 @@ export default function PathwayGraph() {
   // A formula belongs to the pathway it was opened from.
   useEffect(() => { setOpenSeq(null) }, [selected])
 
+  useEffect(() => {
+    try { localStorage.setItem(SPOILER_KEY, showSpoilers ? '1' : '0') } catch { /* private mode */ }
+    // A hidden pathway must not stay selected behind the toggle.
+    setSelected(cur => (cur && !showSpoilers && !PATHWAYS.filter(isStandard).some(p => p.id === cur)) ? null : cur)
+  }, [showSpoilers])
+
   const sel = selected ? getPathway(selected) : null
+  const symbol = sel && symbolFor(sel.id)
+  const describe = sel && describePathway(sel.id)
+  const groupName = sel && GROUPS.find(g => g.id === sel.group)?.name
 
   return (
     <div className="graph-wrap">
@@ -469,8 +502,13 @@ export default function PathwayGraph() {
                 onChange={e => setShowHidden(e.target.checked)} />
               Show hidden neighbouring
             </label>
+            <label className="spoiler" title="The ten outer-deity pathways are sequel material">
+              <input type="checkbox" checked={showSpoilers}
+                onChange={e => setShowSpoilers(e.target.checked)} />
+              Show Circle of Inevitability
+            </label>
           </div>
-          <span className="legend">
+          <span className={showLinks ? 'legend' : 'legend is-off'}>
             <span><i style={{ borderTopColor: '#4ade80' }} /> Neighbouring</span>
             <span><i style={{ borderTopColor: '#fbbf24', borderTopStyle: 'dashed' }} /> Compatible</span>
             <span><i style={{ borderTopColor: '#94a3b8', borderTopStyle: 'dotted' }} /> Hidden</span>
@@ -481,7 +519,7 @@ export default function PathwayGraph() {
           <div className="tip" ref={tipRef} hidden />
           <button className="reset-btn" onClick={() => {
             const { svg, zoom } = zoomRef.current ?? {}
-            if (svg) svg.transition().duration(500).call(zoom.transform, d3.zoomIdentity)
+            if (svg) svg.transition().duration(500).call(zoom.transform, zoomIdentity)
           }}>Reset view</button>
         </div>
       </div>
@@ -490,27 +528,54 @@ export default function PathwayGraph() {
         {!sel && (
           <p className="hint">
             Each circle is a <strong>pathway</strong>. Rings group them under their
-            <strong> Great Old One</strong>, with <strong>Primordial Hunger</strong> at
-            the centre — the symbol of Convergence, compatible with everything.
+            <strong> Great Old One</strong>
+            {showSpoilers && (
+              <>, with <strong>Primordial Hunger</strong> at the centre — the
+                symbol of Convergence, compatible with everything</>
+            )}.
             <br /><br />
             Click a pathway to see its ten sequences and where it can lead.
             Drag to rearrange, scroll to zoom.
           </p>
         )}
+        {!sel && (
+          <>
+            <h3>Proximity</h3>
+            <dl className="proximity-key">
+              <dt><i style={{ borderTopColor: '#4ade80' }} /> Neighbouring</dt>
+              <dd>
+                Pathways under the same Above the Sequence group, or under two
+                groups that form a bigger whole. Switching adds no madness.
+              </dd>
+              <dt><i style={{ borderTopColor: '#fbbf24', borderTopStyle: 'dashed' }} /> Compatible</dt>
+              <dd>
+                Pathways under different groups sharing some Symbols and
+                Authorities. Switching costs madness, though not enough to
+                prevent it.
+              </dd>
+              <dt><i style={{ borderTopColor: '#94a3b8', borderTopStyle: 'dotted' }} /> Hidden</dt>
+              <dd>
+                Pathways with genuine overlap that still cannot be switched
+                between directly. They converge more readily than unrelated
+                pathways do.
+              </dd>
+            </dl>
+          </>
+        )}
         {sel && (
           <>
             <div className="panel-head">
-              {symbolFor(sel.id) && <img src={symbolFor(sel.id)} alt="" />}
+              {symbol && <img src={symbol} alt="" />}
               <div>
                 <h2 style={{ color: GROUP_COLORS[sel.group] }}>{sel.name}</h2>
-                <p className="group">{GROUPS.find(g => g.id === sel.group)?.name}</p>
+                <p className="group">{groupName}</p>
               </div>
             </div>
 
-            {describePathway(sel.id) && (
+            {describe && (
               <>
                 <h3>Abilities</h3>
-                <p className="describe">{describePathway(sel.id)}</p>
+                <p className="describe">{describe}</p>
               </>
             )}
 
@@ -537,23 +602,23 @@ export default function PathwayGraph() {
                     )}
                     {open && adv && (
                       <div className="seq-detail">
-                        <h4>Main {adv.main.length > 1 && <em>any one</em>}</h4>
-                        <ul className={adv.main.length > 1 ? 'alts' : undefined}>
-                          {adv.main.map((m, k) => <li key={k}>{m}</li>)}
-                        </ul>
-                        <h4>Supplementary</h4>
+                        {/* public/potions is served at the root; one image is
+                            fetched only when its sequence is opened. */}
+                        <div className="potion">
+                          <img src={`/potions/${sel.id}-${n}.png`}
+                            alt={`${name} potion`} loading="lazy"
+                            onError={e => { e.currentTarget.closest('.potion').hidden = true }} />
+                        </div>
+                        <h4>Main ingredients</h4>
+                        <ul>{adv.main.map((m, k) => <li key={k}>{m}</li>)}</ul>
+                        <h4>Supplementary ingredients</h4>
                         <ul>{adv.supp.map((m, k) => <li key={k}>{m}</li>)}</ul>
-                        {adv.ritual ? (
+                        {adv.ritual && (
                           <>
                             <h4>Ritual</h4>
                             <p className="ritual">{adv.ritual}</p>
                           </>
-                        ) : (
-                          <p className="no-ritual">
-                            No ritual recorded — this Sequence advances on the potion alone.
-                          </p>
                         )}
-                        {adv.note && <p className="detail-note">{adv.note}</p>}
                       </div>
                     )}
                   </li>
@@ -561,13 +626,9 @@ export default function PathwayGraph() {
               })}
             </ol>
 
-            {getAdvancementNote(sel.id) && (
-              <p className="seq-note">{getAdvancementNote(sel.id)}</p>
-            )}
-
             <h3>Can switch to</h3>
             <ul className="targets">
-              {switchTargets(sel.id).map(t => (
+              {switchTargets(sel.id).filter(t => isVisible(t.id)).map(t => (
                 <li key={t.id} onClick={() => setSelected(t.id)}>
                   <span className="dot" style={{ background: GROUP_COLORS[t.group] }} />
                   {t.name}

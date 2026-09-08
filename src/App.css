@@ -60,20 +60,11 @@ header h1 {
 @media (max-width: 560px) {
   .eyebrow { letter-spacing: 0.16em; }
 }
-.tagline {
-  margin: 0 auto; color: var(--muted); max-width: 78ch;
-  font-family: 'Cormorant Garamond', serif; font-size: 17px; font-style: italic;
-}
 /* A hairline rule that fades out at both ends, echoing the ring strokes. */
-.tagline::after {
+header::after {
   content: ''; display: block; height: 1px; margin: 16px auto 0; max-width: 200px;
   background: linear-gradient(90deg, transparent, var(--edge) 30%, var(--gold) 50%, var(--edge) 70%, transparent);
   opacity: 0.7;
-}
-
-footer {
-  margin-top: 26px; text-align: center; color: var(--dim);
-  font-family: 'Cormorant Garamond', serif; font-size: 15px; font-style: italic;
 }
 
 /* stretch keeps the panel exactly as tall as the graph column */
@@ -96,9 +87,15 @@ footer {
 
 .toggles { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .controls label.is-disabled { opacity: 0.45; cursor: not-allowed; }
+/* The spoiler toggle reveals sequel content, so mark it apart from the
+   two display filters next to it. */
+.controls label.spoiler { border-color: rgba(212, 175, 106, 0.35); }
+.controls label.spoiler:hover { border-color: var(--gold); }
 .controls label.is-disabled:hover { border-color: var(--edge); color: var(--muted); }
 
 .legend { display: flex; align-items: center; gap: 18px; font-size: 12px; }
+/* Nothing to key while the connections are hidden. */
+.legend.is-off { opacity: 0.35; }
 .legend span { display: flex; align-items: center; gap: 7px; }
 .legend i { width: 20px; height: 0; border-top-width: 2px; border-top-style: solid; }
 
@@ -189,6 +186,23 @@ footer {
   font-family: 'Cormorant Garamond', serif; font-size: 16px;
 }
 
+/* What the three line styles mean. */
+.proximity-key { margin: 0; }
+.proximity-key dt {
+  display: flex; align-items: center; gap: 8px;
+  margin-top: 12px; font-family: 'Inter', sans-serif;
+  font-size: 12px; font-weight: 600; color: var(--text);
+}
+.proximity-key dt:first-child { margin-top: 0; }
+.proximity-key dt i {
+  width: 20px; flex-shrink: 0; height: 0;
+  border-top-width: 2px; border-top-style: solid;
+}
+.proximity-key dd {
+  margin: 3px 0 0 28px; color: var(--dim); line-height: 1.55;
+  font-family: 'Cormorant Garamond', serif; font-size: 15px;
+}
+
 .seqlist { list-style: none; margin: 0; padding: 0; }
 .seqlist > li { display: block; }
 .seq-row {
@@ -219,14 +233,24 @@ button.seq-row:hover .chev { color: var(--gold); }
   border-left: 1px solid var(--edge);
   background: rgba(4, 6, 14, 0.5); border-radius: 0 8px 8px 0;
 }
+/* The potion for the open sequence, lit from behind so the glass reads
+   against the dark panel. */
+.potion {
+  display: flex; justify-content: center; align-items: flex-end;
+  height: 140px; margin: 2px 0 14px;
+  background: radial-gradient(ellipse 55% 45% at 50% 55%,
+    rgba(150, 170, 235, 0.14), transparent 70%);
+}
+.potion[hidden] { display: none; }
+.potion img {
+  max-height: 100%; max-width: 90%; width: auto; object-fit: contain;
+  filter: drop-shadow(0 8px 18px rgba(0, 0, 0, 0.6));
+}
+
 .seq-detail h4 {
   margin: 0 0 6px; font-family: 'Inter', sans-serif;
   font-size: 10px; font-weight: 600; letter-spacing: 0.13em;
   text-transform: uppercase; color: var(--dim);
-}
-.seq-detail h4 em {
-  font-style: normal; letter-spacing: 0.06em; text-transform: none;
-  color: var(--gold); opacity: 0.75;
 }
 .seq-detail h4:not(:first-child) { margin-top: 12px; }
 .seq-detail ul { list-style: none; margin: 0; padding: 0; }
@@ -238,36 +262,10 @@ button.seq-row:hover .chev { color: var(--gold); }
 .seq-detail li::before {
   content: '·'; position: absolute; left: 2px; color: var(--dim);
 }
-/* Entries in a main list are alternatives, not a combined recipe. */
-.seq-detail .alts li + li::before {
-  content: 'or'; font-family: 'Inter', sans-serif; font-size: 9px;
-  letter-spacing: 0.08em; left: 0; top: 6px; color: var(--dim); opacity: 0.8;
-}
-.seq-detail .alts li + li { padding-left: 20px; }
-.seq-detail .alts li:first-child { padding-left: 20px; }
-.seq-detail .alts li:first-child::before { content: ''; }
-/* A note attached to one sequence, inside its expanded formula. */
-.detail-note {
-  margin: 10px 0 0; padding-top: 9px;
-  border-top: 1px dashed var(--edge);
-  font-family: 'Cormorant Garamond', serif; font-size: 14px;
-  font-style: italic; color: var(--dim); line-height: 1.55;
-}
-
-/* A pathway-level footnote, sitting under the whole sequence list. */
-.seq-note {
-  margin: 12px 0 0; padding: 10px 12px;
-  border: 1px solid var(--edge); border-radius: 8px;
-  background: rgba(212, 175, 106, 0.05);
-  font-family: 'Cormorant Garamond', serif; font-size: 15px;
-  font-style: italic; color: var(--muted); line-height: 1.6;
-}
-
-.ritual, .no-ritual {
+.ritual {
   margin: 0; font-family: 'Cormorant Garamond', serif; font-size: 15px;
   color: var(--muted); line-height: 1.6;
 }
-.no-ritual { color: var(--dim); font-style: italic; }
 
 .targets { list-style: none; margin: 0; padding: 0; font-size: 13px; }
 .targets li {
