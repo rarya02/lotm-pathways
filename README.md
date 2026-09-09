@@ -6,9 +6,9 @@ Every pathway in the series is a ladder of ten Sequences, and every Sequence has
 a potion behind it: main ingredients, supplementary ingredients, and an
 advancement ritual that has to be performed to survive the climb. Pathways also
 sit at varying distances from one another, which decides whether a Beyonder can
-switch tracks and how much madness it costs.
+switch pathways.
 
-That information is scattered across a very long novel. This puts it in one
+That information is scattered across. This puts it in one
 place you can actually look at.
 
 ![The graph with the Fool pathway selected](docs/screenshot.jpg)
