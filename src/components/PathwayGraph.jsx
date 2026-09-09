@@ -34,11 +34,10 @@ const EDGE_STYLE = {
 // the middle and its edges read as spokes instead.
 const CENTRE_GROUP = 'PH'
 
-// The ten outer-deity pathways are sequel material. Hidden by default so a
-// reader of the first book is not spoiled before finding the toggle.
+// The ten outer-deity pathways are sequel material. Every visit starts with
+// them hidden, so a reader of the first book is never spoiled by default.
 const STANDARD_GROUPS = new Set(GROUPS.filter(g => g.standard).map(g => g.id))
 const isStandard = (pathway) => STANDARD_GROUPS.has(pathway.group)
-const SPOILER_KEY = 'lotm:show-outer-deity-pathways'
 
 // Groups whose label reads better in a fixed spot than wherever the automatic
 // radial placement lands. The label is centred on the ring and nudged by `dx`,
@@ -67,9 +66,7 @@ export default function PathwayGraph() {
   const [selected, setSelected] = useState(null)
   const [showHidden, setShowHidden] = useState(false)
   const [showLinks, setShowLinks] = useState(false)
-  const [showSpoilers, setShowSpoilers] = useState(() => {
-    try { return localStorage.getItem(SPOILER_KEY) === '1' } catch { return false }
-  })
+  const [showSpoilers, setShowSpoilers] = useState(false)
   const [openSeq, setOpenSeq] = useState(null)
   const [size, setSize] = useState({ width: 0, height: 0 })
   const visible = showSpoilers ? PATHWAYS : PATHWAYS.filter(isStandard)
@@ -476,9 +473,17 @@ export default function PathwayGraph() {
   // A formula belongs to the pathway it was opened from.
   useEffect(() => { setOpenSeq(null) }, [selected])
 
+  // Escape backs out of a selection, so dismissing never depends on finding
+  // empty canvas to click.
   useEffect(() => {
-    try { localStorage.setItem(SPOILER_KEY, showSpoilers ? '1' : '0') } catch { /* private mode */ }
-    // A hidden pathway must not stay selected behind the toggle.
+    if (!selected) return
+    const onKey = (e) => { if (e.key === 'Escape') setSelected(null) }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [selected])
+
+  // A hidden pathway must not stay selected behind the toggle.
+  useEffect(() => {
     setSelected(cur => (cur && !showSpoilers && !PATHWAYS.filter(isStandard).some(p => p.id === cur)) ? null : cur)
   }, [showSpoilers])
 
@@ -520,6 +525,7 @@ export default function PathwayGraph() {
           <button className="reset-btn" onClick={() => {
             const { svg, zoom } = zoomRef.current ?? {}
             if (svg) svg.transition().duration(500).call(zoom.transform, zoomIdentity)
+            setSelected(null)
           }}>Reset view</button>
         </div>
       </div>
@@ -530,7 +536,7 @@ export default function PathwayGraph() {
             Each circle is a <strong>pathway</strong>. Rings group them under their
             <strong> Great Old One</strong>
             {showSpoilers && (
-              <>, with <strong>Primordial Hunger</strong> at the centre — the
+              <>, with <strong>Primordial Hunger</strong> at the centre, the
                 symbol of Convergence, compatible with everything</>
             )}.
             <br /><br />
@@ -566,10 +572,12 @@ export default function PathwayGraph() {
           <>
             <div className="panel-head">
               {symbol && <img src={symbol} alt="" />}
-              <div>
+              <div className="panel-title">
                 <h2 style={{ color: GROUP_COLORS[sel.group] }}>{sel.name}</h2>
                 <p className="group">{groupName}</p>
               </div>
+              <button type="button" className="panel-close" onClick={() => setSelected(null)}
+                title="Close (Esc)" aria-label="Close pathway details">×</button>
             </div>
 
             {describe && (

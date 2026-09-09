@@ -16,6 +16,3 @@ export const SYMBOLS = Object.fromEntries(
 )
 
 export const symbolFor = (id) => SYMBOLS[id] ?? null
-
-// Pathways whose symbol failed to resolve, so a rename shows up loudly in dev.
-export const MISSING_SYMBOLS = PATHWAYS.filter(p => !SYMBOLS[p.id]).map(p => p.id)

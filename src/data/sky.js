@@ -1,7 +1,7 @@
 // Shared starfield generation.
 
 // Deterministic PRNG: the sky is identical on every draw instead of reshuffling.
-export const seededRandom = (seed) => () => (seed = (seed * 16807) % 2147483647) / 2147483647
+const seededRandom = (seed) => () => (seed = (seed * 16807) % 2147483647) / 2147483647
 
 // One star per ~3000px², the density the graph canvas was originally tuned at.
 const DENSITY = 3000

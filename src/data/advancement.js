@@ -1771,6 +1771,3 @@ export const ADVANCEMENT = {
 }
 
 export const getAdvancement = (pathwayId, seq) => ADVANCEMENT[pathwayId]?.[seq] ?? null
-
-// Whether a pathway has any advancement data recorded yet.
-export const hasAdvancement = (pathwayId) => Boolean(ADVANCEMENT[pathwayId])
