@@ -11,8 +11,7 @@ sit at varying distances from one another, which decides whether a Beyonder can
 switch pathways.
 
 That information is scattered across. This puts it in one
-place you can actually look at. There is a longer write-up in
-[ABOUT.md](ABOUT.md).
+place you can actually look at.
 
 ![The graph with the Fool pathway selected](docs/screenshot.jpg)
 
