@@ -11,11 +11,6 @@ Sequence, with ingredients that have to be hunted down and a ritual that has to
 be performed. Pathways that sit close enough to switch between, and pathways
 that will tear you apart if you try.
 
-None of that arrives in one piece. It accumulates over hundreds of chapters, and
-the reference material for it lives spread across a wiki. If you want to answer
-something as simple as *what does a Marionettist actually need, and what can a
-Fool switch to*, you are opening several tabs.
-
 This puts the whole system on one screen.
 
 ## How to read the map
@@ -46,10 +41,9 @@ Connections start hidden so the map opens clean. Turn them on to trace routes.
 The ten outer-deity pathways are material from *Circle of Inevitability*, the
 sequel. They stay hidden on every visit until you ask for them.
 
-That hiding is real rather than cosmetic. Their edges, their group rings and
-their appearances in other pathways' switch lists are all filtered out, so
-nothing about the second book leaks through a side panel while you are reading
-the first.
+Their edges, their group rings and their appearances in other pathways' switch 
+lists are all filtered out, so nothing about the second book leaks through a 
+side panel while you are reading the first.
 
 ## How it is built
 
