@@ -79,6 +79,20 @@ header::after {
   opacity: 0.7;
 }
 
+/* Attribution line: present and readable, but never competing with the map. */
+.credit {
+  margin: 22px auto 0; max-width: 70ch; text-align: center;
+  font-family: 'Inter', system-ui, sans-serif; font-size: 11.5px;
+  line-height: 1.7; color: var(--dim);
+}
+.credit a {
+  color: var(--muted); text-decoration: none;
+  border-bottom: 1px solid var(--edge);
+  transition: color 0.15s, border-color 0.15s;
+}
+.credit a:hover, .credit a:focus-visible { color: var(--gold); border-color: var(--gold); }
+.credit a:focus-visible { outline: none; }
+
 /* stretch keeps the panel exactly as tall as the graph column */
 .graph-wrap { display: flex; gap: 22px; align-items: stretch; }
 .graph-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }

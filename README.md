@@ -1,5 +1,7 @@
 # Pathway Explorer
 
+**[lotm-pathways.vercel.app](https://lotm-pathways.vercel.app/)**
+
 An interactive star map of the Beyonder pathways from *Lord of the Mysteries*.
 
 Every pathway in the series is a ladder of ten Sequences, and every Sequence has
@@ -9,7 +11,8 @@ sit at varying distances from one another, which decides whether a Beyonder can
 switch pathways.
 
 That information is scattered across. This puts it in one
-place you can actually look at.
+place you can actually look at. There is a longer write-up in
+[ABOUT.md](ABOUT.md).
 
 ![The graph with the Fool pathway selected](docs/screenshot.jpg)
 
@@ -50,7 +53,8 @@ npm install
 npm run dev
 ```
 
-`npm run build` writes a static site to `dist/`.
+`npm run build` writes a static site to `dist/`. It is deployed on Vercel from
+`main`, so a push updates the live site.
 
 ## Where the data lives
 
@@ -85,6 +89,15 @@ what keeps the page cheap to render.
 
 ## Credit
 
-*Lord of the Mysteries* and *Circle of Inevitability* were written by Cuttlefish
-That Loves Diving. This is an unofficial fan project, built for reference, and
-claims no ownership of the source material or the artwork.
+*Lord of the Mysteries* and *Circle of Inevitability* were written by
+**Cuttlefish That Loves Diving**.
+
+The pathway data, Sequence names, potion formulas, advancement rituals, sigils
+and potion artwork all come from the
+**[Lord of the Mysteries Wiki](https://lordofthemysteries.fandom.com/)** and the
+community that built it, reused under
+[CC BY-SA 3.0](https://www.fandom.com/licensing).
+
+This is an unofficial, non-commercial fan project and claims no ownership of the
+novels, the setting, or the artwork. Full credits are in
+[ABOUT.md](ABOUT.md#sources-and-credit).
